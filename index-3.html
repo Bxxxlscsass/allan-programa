@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Programador TI - Overclock Terminal Portfolio</title>
+    <link href="https://googleapis.com" rel="stylesheet">
+    
+    <style>
+        :root {
+            /* INDUSTRIAL IT DARK PALETTE (Matt Finish Chassis Style) */
+            --bg-color: #16181d;          
+            --comic-border: #090a0f;      
+            --panel-bg: #0f1115;          
+            
+            /* Infrastructural Terminal Syntax Colors */
+            --js-keyword: #ff9e3b;        /* Warning Industrial Orange */
+            --js-string: #00ff66;         /* Machinery Safe Active Green */
+            --js-comment: #565f73;        /* Circuit Diagram Muted Gray */
+            
+            /* Critical Status Overrides */
+            --fire-color: #ff3333;        
+            --fire-orange: #ff6a00;       
+            --rpg-green: #00ffcc;         
+            --cyber-blue: #38bdf8;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        /* --- CRT MONITOR GLASS COVER MODIFIER --- */
+        html::after {
+            content: " ";
+            display: block;
+            position: fixed;
+            top: 0; left: 0; bottom: 0; right: 0;
+            background: linear-gradient(rgba(10, 10, 15, 0) 40%, rgba(0, 0, 0, 0.4) 40%), 
+                        linear-gradient(90deg, rgba(255, 0, 0, 0.04), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.04));
+            z-index: 99999;
+            background-size: 100% 5px, 6px 100%;
+            pointer-events: none;
+            animation: crt-flicker 0.2s infinite;
+        }
+
+        @keyframes crt-flicker {
+            0% { opacity: 0.98; }
+            50% { opacity: 1; }
+            100% { opacity: 0.97; }
+        }
+
+        body {
+            background-color: var(--bg-color);
+            font-family: 'Fira Code', monospace;
+            color: #e1e7f0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            overflow-x: hidden;
+            box-shadow: inset 0 0 160px rgba(0, 0, 0, 0.95);
+        }
+
+        /* --- CONTROL CONSOLE CONSOLE RACK --- */
+        .control-panel {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 12px;
+            margin-bottom: 25px;
+            background: #22252c;
+            padding: 12px 20px;
+            border: 4px solid var(--comic-border);
+            box-shadow: 6px 6px 0px rgba(0,0,0,0.6);
+            z-index: 100;
+            max-width: 900px;
+            width: 100%;
+        }
+
+        .btn-industrial {
+            font-family: 'Press Start 2P', cursive;
+            font-size: 8px;
+            padding: 10px 14px;
+            background: #3e4451;
+            color: #fff;
+            border: 3px solid #000;
+            box-shadow: 0 4px 0 #1c1e24, inset 0 2px 0 rgba(255,255,255,0.2);
+            cursor: pointer;
+            outline: none;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.1s ease;
+        }
+
+        .btn-industrial:active, .btn-industrial.active-toggle {
+            transform: translateY(3px);
+            box-shadow: 0 1px 0 #1c1e24, inset 0 2px 4px rgba(0,0,0,0.4);
+        }
+
+        .btn-restart { border-color: #990000; background: #cc0000; text-shadow: 1px 1px #000; }
+        .btn-restart:hover { background: #e60000; }
+        
+        .btn-audio { border-color: #007755; background: #009966; text-shadow: 1px 1px #000; }
+        .btn-audio:hover { background: #00cc88; }
+
+        .btn-turbo { border-color: #d97706; background: #f59e0b; color: #000; font-weight: bold; }
+        .btn-turbo:hover { background: #fbbf24; }
+
+        .btn-slow { border-color: #4b5563; background: #6b7280; text-shadow: 1px 1px #000; }
+        .btn-slow:hover { background: #9ca3af; }
+
+        .btn-print { border-color: #2563eb; background: #3b82f6; text-shadow: 1px 1px #000; }
+        .btn-print:hover { background: #60a5fa; }
+
+        /* LOADING TERMINAL BOOT */
+        #loader-screen {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            background-color: #050508;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Press Start 2P', cursive;
+            transition: transform 0.6s cubic-bezier(0.85, 0, 0.15, 1), opacity 0.5s ease;
+        }
+
+        .loader-title { font-size: 18px; color: #fff; margin-bottom: 8px; letter-spacing: 2px; text-shadow: 3px 3px 0px var(--fire-color); }
+        .loader-subtitle { font-size: 10px; color: var(--js-comment); margin-bottom: 30px; }
+        .progress-container { width: 320px; border: 4px solid #fff; padding: 4px; background: transparent; box-shadow: 6px 6px 0px rgba(0,0,0,0.5); }
+        .progress-bar { width: 0%; height: 20px; background-color: var(--rpg-green); transition: width 0.1s linear; }
+        .progress-text { margin-top: 15px; font-size: 12px; color: var(--rpg-green); }
+
+        /* COMIC FRAME GRID SYSTEM */
+        .comic-page {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            grid-gap: 15px;
+            max-width: 900px;
+            width: 100%;
+            background-color: var(--comic-border);
+            padding: 15px;
+            border: 6px solid var(--comic-border);
+            box-shadow: 12px 12px 0px rgba(0,0,0,0.4);
+            transform: rotate(-0.5deg); 
+            display: none; 
+        }
+
+        .panel {
+            background-color: var(--panel-bg);
+            border: 4px solid var(--comic-border);
+            padding: 20px;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            min-height: 290px;
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.6);
+            opacity: 0;
+            transition: opacity 0.4s ease-in-out;
+        }
+
+        .panel.visible { opacity: 1; }
+
+        .panel-caption {
+            background-color: #fff;
+            color: #000;
+            font-family: 'Press Start 2P', cursive;
+            font-size: 10px;
+            padding: 6px 12px;
+            border: 3px solid var(--comic-border);
+            position: absolute;
+            top: -4px; left: -4px;
+            transform: skewX(-10deg);
+            z-index: 2;
+            box-shadow: 3px 3px 0px #000;
+        }
+
+        .typewriter-content { font-size: 12px; line-height: 1.5; margin-top: 25px; white-space: pre-wrap; min-height: 110px; }
+        .keyword { color: var(--js-keyword); font-weight: bold; }
+        .string { color: var(--js-string); }
+        .comment { color: var(--js-comment); font-style: italic; }
+
+        .speech-bubble {
+            background: #fff;
+            color: #000;
+            border: 3px solid var(--comic-border);
+            padding: 10px;
+            font-size: 11px;
+            font-weight: bold;
+            border-radius: 4px;
+            margin-top: 10px;
+            position: relative;
+            box-shadow: 4px 4px 0px rgba(0,0,0,0.2);
+            visibility: hidden; 
+        }
+
+        .panel-fire { background: linear-gradient(180deg, var(--panel-bg) 40%, #441111 100%); }
+
+        @keyframes shake {
+            0% { transform: translate(1px, 1px) rotate(0deg); }
+            10% { transform: translate(-1px, -2px) rotate(-1deg); }
+            20% { transform: translate(-3px, 0px) rotate(1deg); }
+            30% { transform: translate(0px, 2px) rotate(0deg); }
+            40% { transform: translate(1px, -1px) rotate(1deg); }
+            50% { transform: translate(-1px, 2px) rotate(-1deg); }
+            60% { transform: translate(-3px, 1px) rotate(0deg); }
+            70% { transform: translate(2px, 1px) rotate(-1deg); }
+            100% { transform: translate(1px, -2px) rotate(0deg); }
+        }
+
+        .panel-on-fire { animation: shake 0.3s infinite; border: 4px solid var(--fire-color); }
+
+        .ascii-fire {
+            position: absolute; bottom: 5px; right: 10px;
+            font-family: 'Press Start 2P', cursive; font-size: 18px;
+            color: var(--fire-color); text-shadow: 0 0 10px var(--fire-orange);
+            opacity: 0; transition: opacity 0.5s ease-in;
+            line-height: 1; text-align: right;
+        }
+        
+        .ascii-fire.visible { opacity: 0.9; }
+
+        .cursor::after { content: '█'; animation: blink 0.6s infinite; color: var(--rpg-green); }
+        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+
+        /* INVENTORY LOOT BOX GRIDS */
+        .inventory-grid {
+            display: flex; gap: 12px; margin-top: 15px;
+            opacity: 0; transform: translateY(10px);
+            transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .inventory-grid.unlocked { opacity: 1; transform: translateY(0); }
+
+        .inventory-item {
+            width: 50px; height: 50px;
+            background-color: #1a1a24;
+            border: 3px solid var(--comic-border);
+            box-shadow: inset 0 0 8px rgba(0,0,0,0.8), 3px 3px 0px rgba(0,0,0,0.3);
+            display: flex; justify-content: center; align-items: center;
+            text-decoration: none; position: relative; cursor: pointer;
+            transition: transform 0.1s ease, border-color 0.2s ease;
+        }
+
+        .inventory-item:hover { border-color: var(--rpg-green); transform: scale(1.1) translateY(-2px); }
+
+        .inventory-item::after {
+            content: attr(data-item-name);
+            position: absolute; bottom: -28px;
+
+            background: #fff; color: #000;
+            font-size: 8px; font-family: 'Press Start 2P', cursive;
+            padding: 3px 6px; border: 2px solid #000;
+            white-space: nowrap; visibility: hidden; opacity: 0;
+            transition: opacity 0.2s ease; z-index: 10;
+        }
+        .inventory-item:hover::after { visibility: visible; opacity: 1; }
+        .icon-github::before { content: '🐱'; font-size: 16px; }
+        .icon-linkedin { color: #0077b5; font-weight: bold; font-family: 'Press Start 2P', cursive; 
+        font-size: 14px; }
+        .icon-portfolio { font-size: 16px; }
+        
+        @media (max-width: 768px) {
+            .comic-page { grid-template-columns: 1fr; }
+            .panel { min-height: auto; }
+        }
+        /* --- CLEAN SYSTEM STYLES SPECIFICALLY FOR PRINT/PDF GENERATOR --- */
+        @media print {
+            body { background: #fff !important; color: #000 !important; box-shadow: none 
+                !important; padding: 0; }
+                html::after, .control-panel, #loader-screen { display: none !important; }
+                .comic-page { display: grid !important; background: transparent !important; border: none 
+                    !important; box-shadow: none !important; transform: none !important; max-width: 100% 
+                    !important; }
+                    .panel { background: #fff !important; border: 3px solid #000 !important; box-shadow: none 
+                    !important; page-break-inside: avoid; color: #000 !important; opacity: 1 !important; }
+                    .panel-caption { background: #000 !important; color: #fff !important; box-shadow: none !important; }
+                    .keyword { color: #0000ff !important; }
+                    .string { color: #008000 !important; }
+                    .comment { color: #7f7f7f !important; }
+                    .speech-bubble { background: #f3f4f6 !important; border: 2px solid #000 !important; 
+                        box-shadow: none !important; visibility: visible !important; }
+                        .inventory-grid { opacity: 1 !important; transform: none !important; }
+                        .inventory-item { border: 2px solid #000 !important; background: #f3f4f6 !important; }
+                        .icon-linkedin { color: #000 !important; }
+                    }
+        </style>
+<body>
+
+    <!-- 1. PHYSICAL INDUSTRIAL CONTROL SWITCHES -->
+    <div class="control-panel">
+        <button class="btn-industrial btn-restart" id="btn-restart">⚙️ RESTART</button>
+        <button class="btn-industrial btn-audio" id="btn-audio">🔊 AUDIO: ON</button>
+    </div>
+
+    <!-- 2. RETRO SYSTEM BOOT LOADER SCREEN OVERLAY -->
+    <div id="loader-screen">
+        <div class="loader-title">OVERCLOCK_OS v1.0.0</div>
+        <div class="loader-subtitle">MOUNTING JS_COMIC_ENGINE...</div>
+        <div class="progress-container">
+            <div class="progress-bar" id="load-bar"></div>
+        </div>
+        <div class="progress-text" id="load-text">0%</div>
+    </div>
+
+    <!-- 3. MAIN COMIC ENGINE WORKSPACE GRAPHICS GRID -->
+    <div class="comic-page" id="main-comic">
+        <!-- CELL PANEL 1 -->
+        <div class="panel" id="panel-1">
+            <div class="panel-caption">PAINEL 1: INIT()</div>
+            <div class="typewriter-content" data-text='<span class="keyword">const</span> dev = {\n  nome: <span class="string">"Allan Felipe"</span>,\n  foco: <span class="string">"JavaScript / React"</span>\n};\n<span class="comment">// Inicializando portfólio...</span>\nbootSystem();'></div>
+            <div class="speech-bubble">👾 "BOOT UP! Bem-vindo ao compilador da minha jornada profissional."</div>
+        </div>
+
+        <!-- CELL PANEL 2 -->
+        <div class="panel" id="panel-2">
+            <div class="panel-caption">PAINEL 2: HEATING UP</div>
+            <div class="typewriter-content" data-text='<span class="keyword">class</span> Experiencia {\n  <span class="keyword">constructor</span>() {\n    this.cargo = <span class="string">"Programador TI"</span>;\n    this.carga_cpu = <span class="string">"OVERCLOCK"</span>;\n  }\n}'></div>
+            <div class="speech-bubble" style="background-color: #ffb86c;">⚠️ ALERTA: Rodando múltiplas automações complexas. Temperatura da CPU subindo!</div>
+        </div>
+
+        <!-- CELL PANEL 3 -->
+        <div class="panel panel-fire" id="panel-3">
+            <div class="panel-caption" style="background-color: var(--fire-color); color: white;">PAINEL 3: SYSTEM MELTDOWN</div>
+            <div class="typewriter-content" data-text='<span class="keyword">while</span>(pc.status === <span class="string">"CHAMAS"</span>) {\n  <span class="comment">// Skills para conter o dano:</span>\n  usar(<span class="string">"Node.js"</span>);\n  usar(<span class="string">"TypeScript"</span>);\n  usar(<span class="string">"Debug_Sob_Pressao"</span>);\n}'></div>
+            <div class="ascii-fire">{ }<br>&& ||<br>=&gt; 🔥</div>
+            <div class="speech-bubble" style="background-color: var(--fire-color); color: white;">🚨 PERIGO! O hardware explodiu devido ao excesso de projetos concluídos!</div>
+        </div>
+
+        <!-- CELL PANEL 4 -->
+        <div class="panel" id="panel-4">
+            <div class="panel-caption" style="background-color: var(--rpg-green); color: black;">PAINEL 4: HIGH SCORE</div>
+            <div class="typewriter-content" data-text='<span class="keyword">const</span> vitoria = {\n  formacao: <span class="string">"Ciência da Computação"</span>,\n  idioma: <span class="string">"Inglês Técnico"</span>\n};\n<span class="comment">// Hardware resfriado com sucesso.</span>'></div>
+            
+            <div class="inventory-grid" id="loot-box">
+                <a href="https://bxxxlscsass.github.io/AllanFelipeDevelopment.github.io--/" target="_blank" class="inventory-item" data-item-name="PORTFOLIO"><span class="icon-portfolio">🌐</span></a>
+                <a href="https://github.com/Bxxxlscsass" target="_blank" class="inventory-item" data-item-name="GITHUB"><span class="icon-github"></span></a> 
+                <a href="https://linkedin.com/in/" target="_blank" class="inventory-item" data-item-name="LINKEDIN"><span class="icon-linkedin">In</span></a>
+                </div>
+            <div class="speech-bubble" style="background-color: var(--rpg-green); font-family: 'Press Start 2P', cursive; font-size: 8px; color: black;">🏆 VITÓRIA! REDES SOCIAIS DESBLOQUEADAS.</div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const mainComic = document.getElementById("main-comic");
+            
+            let progress = 0;
+            let loaderInterval;
+            let currentTimeout;
+            let audioActive = true;
+            let audioCtx = null; // Inicialização segura para contornar o bloqueio de Autoplay
+
+            // Inicializador seguro para o AudioContext do Navegador
+            function initAudio() {
+                if (!audioCtx) {
+                    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                }
+                if (audioCtx.state === 'suspended') {
+                    audioCtx.resume();
+                }
+            }
+
+            // Ativa o áudio com segurança ao interagir com o botão
+            document.getElementById("btn-audio").addEventListener("click", (e) => {
+                initAudio();
+                audioActive = !audioActive;
+                e.target.innerText = audioActive ? "🔊 AUDIO: ON" : "🔇 AUDIO: OFF";
+            });
+
+            // Reinicia o fluxo do console industrial
+            document.getElementById("btn-restart").addEventListener("click", () => {
+                initAudio();
+                clearTimeout(currentTimeout);
+                clearInterval(loaderInterval);
+                
+                let existingLoader = document.getElementById("loader-screen");
+                if(!existingLoader) {
+                    const lScreen = document.createElement("div");
+                    lScreen.id = "loader-screen";
+                    lScreen.innerHTML = `<div class="loader-title">OVERCLOCK_OS v1.0.0</div><div class="loader-subtitle">MOUNTING JS_COMIC_ENGINE...</div><div class="progress-container"><div class="progress-bar" id="load-bar"></div></div><div class="progress-text" id="load-text">0%</div>`;
+                    document.body.appendChild(lScreen);
+                }
+                
+                mainComic.style.display = "none";
+                document.querySelectorAll(".panel").forEach(p => {
+                    p.classList.remove("visible", "panel-on-fire");
+                    p.querySelector(".typewriter-content").innerHTML = "";
+                    p.querySelector(".speech-bubble").style.visibility = "hidden";
+                });
+                document.getElementById("loot-box").classList.remove("unlocked");
+                document.querySelector(".ascii-fire").classList.remove("visible");
+                
+                progress = 0;
+                runLoader();
+            });
+
+            function runLoader() {
+                const lBar = document.getElementById("load-bar");
+                const lText = document.getElementById("load-text");
+                const lScreen = document.getElementById("loader-screen");
+                
+                if(!lBar) return;
+
+                loaderInterval = setInterval(() => {
+                    if (progress < 100) {
+                        progress += Math.floor(Math.random() * 8) + 2;
+                        if (progress > 100) progress = 100;
+                        lBar.style.width = `${progress}%`;
+                        lText.innerText = `${progress}%`;
+                    } else {
+                        clearInterval(loaderInterval);
+                        setTimeout(() => {
+                            lScreen.style.opacity = "0";
+                            lScreen.style.transform = "scale(1.1)";
+                            mainComic.style.display = "grid";
+                            setTimeout(() => { lScreen.remove(); typePanel(0); }, 500);
+                        }, 400);
+                    }
+                }, 60);
+            }
+
+            const panels = [
+                { id: "panel-1", delay: 1200 },
+                { id: "panel-2", delay: 1200 },
+                { id: "panel-3", delay: 1200, triggerFire: true },
+                { id: "panel-4", delay: 0 }
+            ];
+
+            function typePanel(index) {
+                if (index >= panels.length) return;
+                const panelData = panels[index];
+                const panelEl = document.getElementById(panelData.id);
+                const codeContainer = panelEl.querySelector('.typewriter-content');
+                const bubble = panelEl.querySelector('.speech-bubble');
+
+                panelEl.classList.add('visible');
+                codeContainer.classList.add('cursor');
+                const htmlString = codeContainer.getAttribute('data-text');
+                const tokens = parseHtmlString(htmlString);
+                let tokenIndex = 0;
+
+                function typeToken() {
+                    if (tokenIndex < tokens.length) {
+                        codeContainer.innerHTML += tokens[tokenIndex];
+                        tokenIndex++;
+                        
+                        // Executa o som se estiver ativo e o usuário tiver interagido
+                        if(audioActive && tokenIndex % 3 === 0) { playBeep(); }
+                        
+                        currentTimeout = setTimeout(typeToken, 12);
+                    } else {
+                        codeContainer.classList.remove('cursor');
+                        if (panelData.triggerFire) {
+                            panelEl.classList.add('panel-on-fire');
+                            panelEl.querySelector('.ascii-fire').classList.add('visible');
+                        }
+                        if (panelData.id === "panel-4") {
+                            const loot = document.getElementById("loot-box");
+                            if(loot) loot.classList.add("unlocked");
+                        }
+                        currentTimeout = setTimeout(() => {
+                            bubble.style.visibility = "visible";
+                            currentTimeout = setTimeout(() => { typePanel(index + 1); }, panelData.delay);
+                        }, 400);
+                    }
+                }
+                typeToken();
+            }
+
+            // Gerador de oscilação Web Audio com tratamento seguro de concorrência
+            function playBeep() {
+                try {
+                    // Inicializa caso o usuário tenha clicado na viewport em vez dos botões do console
+                    if (!audioCtx) return; 
+                    
+                    const osc = audioCtx.createOscillator();
+                    const gain = audioCtx.createGain();
+                    osc.type = 'square';
+                    osc.frequency.setValueAtTime(620, audioCtx.currentTime); // Frequência do bipe retrô
+                    gain.gain.setValueAtTime(0.008, audioCtx.currentTime);    // Ganho baixo para som não agressivo
+                    osc.connect(gain); 
+                    gain.connect(audioCtx.destination);
+                    osc.start(); 
+                    osc.stop(audioCtx.currentTime + 0.025);
+                } catch(e) {}
+            }
+
+            function parseHtmlString(str) {
+                const result = []; let i = 0;
+                while (i < str.length) {
+                    if (str[i] === '<') {
+                        let tag = '';
+                        while (i < str.length && str[i] !== '>') { tag += str[i]; i++; }
+                        tag += '>'; i++; result.push(tag);
+                    } else if (str.substr(i, 2) === '\\n') {
+                        result.push('<br>'); i += 2;
+                    } else { result.push(str[i]); i++; }
+                }
+                return result;
+            }
+
+            // Escuta um clique inicial genérico na tela para liberar o contexto de áudio preventivamente
+            window.addEventListener('click', initAudio, { once: true });
+
+            runLoader();
+        });
+    </script>
+</body>
+</html>
+
